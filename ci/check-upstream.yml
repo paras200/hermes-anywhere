@@ -1,0 +1,79 @@
+name: Check upstream Hermes release
+
+on:
+  schedule:
+    - cron: '0 14 * * *'   # daily at 14:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect pinned + latest versions
+        id: versions
+        run: |
+          PINNED=$(grep -oE 'v[0-9]{4}\.[0-9]+\.[0-9]+' docker-compose.yml | head -1)
+          LATEST=$(curl -fsSL \
+            "https://hub.docker.com/v2/repositories/nousresearch/hermes-agent/tags?page_size=25&ordering=last_updated" \
+            | jq -r '.results[].name' \
+            | grep -E '^v[0-9]{4}\.[0-9]+\.[0-9]+$' \
+            | sort -V \
+            | tail -1)
+          echo "pinned=$PINNED" >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+          echo "Pinned: $PINNED"
+          echo "Latest: $LATEST"
+
+      - name: Open issue if newer version available
+        if: steps.versions.outputs.pinned != steps.versions.outputs.latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PINNED: ${{ steps.versions.outputs.pinned }}
+          LATEST: ${{ steps.versions.outputs.latest }}
+        run: |
+          TITLE="Hermes Agent ${LATEST} available (currently pinned to ${PINNED})"
+
+          # Skip if an open issue with this title already exists.
+          EXISTING=$(gh issue list --state open --search "in:title \"${LATEST}\"" --json number --jq '.[0].number // empty')
+          if [[ -n "$EXISTING" ]]; then
+            echo "Issue #$EXISTING already tracks $LATEST — skipping."
+            exit 0
+          fi
+
+          # Pull release notes from the upstream GitHub release.
+          NOTES=$(gh api "repos/NousResearch/hermes-agent/releases/tags/${LATEST}" --jq .body 2>/dev/null || echo "_Release notes not yet published — check Docker Hub._")
+
+          BODY=$(cat <<EOF
+          A newer Hermes Agent image has been published.
+
+          - **Currently pinned:** \`${PINNED}\`
+          - **Latest:** \`${LATEST}\`
+          - **Release notes:** https://github.com/NousResearch/hermes-agent/releases/tag/${LATEST}
+
+          ## Upstream release notes
+
+          ${NOTES}
+
+          ---
+
+          ### To update
+
+          \`\`\`bash
+          scripts/update.sh ${LATEST}
+          git commit -am "Bump Hermes to ${LATEST}"
+          git push
+          # On the VM:
+          cd /opt/hermes-anywhere && git pull && docker compose pull && docker compose up -d
+          \`\`\`
+
+          _Auto-opened by \`.github/workflows/check-upstream.yml\`._
+          EOF
+          )
+
+          gh issue create --title "$TITLE" --body "$BODY" --label "upstream-update"

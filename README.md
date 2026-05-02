@@ -56,6 +56,23 @@ terraform apply
 
 In ~60–90 seconds, `terraform output dashboard_url` is reachable in your browser.
 
+## Day-2 operations
+
+Once Hermes is up, the repo is also a full operations toolkit:
+
+| Command | What it does |
+|---|---|
+| `make doctor` | Health check — containers, dashboard, OpenRouter key, disk |
+| `make check-update` | Polls Docker Hub for newer Hermes versions |
+| `make update VERSION=v2026.5.X` | Atomic version bump across docker-compose + 5× Terraform modules |
+| `make backup` | GPG-encrypted tarball of `hermes-data/` |
+| `make restore FILE=…` | Restore from a backup tarball |
+| `sudo make install-cron` | Install systemd timer for daily upstream-version checks (Telegram + journal) |
+
+Plus, this repo includes a daily GitHub Action ([`ci/check-upstream.yml`](ci/check-upstream.yml)) that auto-opens an issue when Nous Research publishes a new Hermes release. See [`ci/README.md`](ci/README.md) for one-line activation.
+
+Full walkthrough: [`docs/OPERATIONS.md`](docs/OPERATIONS.md).
+
 ## Repo layout
 
 ```
@@ -65,8 +82,20 @@ hermes-anywhere/
 ├── docker-compose.yml        # Hermes gateway + dashboard
 ├── .env.example              # env-var template
 ├── chatbox.py                # OpenRouter REPL for quick model testing
+├── Makefile                  # ops entry points — run `make help`
 ├── cloud-init/
 │   └── hermes.cloud-config.yaml.tpl   # provider-agnostic VM bootstrap
+├── scripts/
+│   ├── check-update.sh       # poll Docker Hub for newer Hermes
+│   ├── update.sh             # atomic version bump
+│   ├── notify-update.sh      # daily systemd/Telegram notifier
+│   ├── install-cron.sh       # set up the systemd timer
+│   ├── doctor.sh             # 7-point health check
+│   ├── backup.sh             # GPG-encrypted hermes-data/ tarball
+│   └── restore.sh            # rollback-safe restore
+├── ci/                       # GitHub Actions (move into .github/workflows/ to activate)
+│   ├── check-upstream.yml    # daily auto-issue on new upstream release
+│   └── terraform-validate.yml # PR check for HCL
 ├── terraform/
 │   ├── README.md             # picks-your-cloud guide
 │   ├── hetzner/              # CX22, €4.49/mo
@@ -105,6 +134,7 @@ Skills are how Hermes learns. The included [`skills/alpha-desk/`](skills/alpha-d
 
 ## Documentation
 
+- [`docs/OPERATIONS.md`](docs/OPERATIONS.md) — **the walkthrough**: deploy, update, back up, restore, migrate
 - [`AGENTS.md`](AGENTS.md) — explicit execution guide for AI agents (Claude Code, Cursor, etc.)
 - [`docs/COSTS.md`](docs/COSTS.md) — full cloud cost analysis
 - [`docs/MODEL_SELECTION.md`](docs/MODEL_SELECTION.md) — OpenRouter free model comparison

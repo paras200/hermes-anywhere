@@ -143,21 +143,40 @@ scp -r skills/<name> user@vm:/opt/hermes-anywhere/hermes-data/skills/
 
 ## Updating the Hermes image
 
-Hermes releases roughly every 1–2 weeks. To bump:
+Hermes releases roughly every 1–2 weeks. **Use the automated path** — do not edit version numbers by hand:
 
-1. Find the latest tag at https://hub.docker.com/r/nousresearch/hermes-agent/tags
-2. Read release notes at https://github.com/NousResearch/hermes-agent/releases for breaking changes
-3. Update **two** places:
-   - `docker-compose.yml` default: `${HERMES_VERSION:-vYYYY.M.D}`
-   - All five `terraform/<provider>/variables.tf`: `default = "vYYYY.M.D"` for `hermes_version`
-4. Commit, push, then on the running VM:
-   ```bash
-   cd /opt/hermes-anywhere
-   sudo git pull
-   sudo docker compose pull && sudo docker compose up -d
-   ```
+```bash
+# 1. Confirm there's a newer version
+make check-update
 
-Never use `:latest`. Pinning is mandatory.
+# 2. Bump it everywhere atomically (docker-compose.yml, .env.example, all 5 variables.tf)
+make update VERSION=vYYYY.M.D
+
+# 3. Read release notes before merging
+open "https://github.com/NousResearch/hermes-agent/releases/tag/vYYYY.M.D"
+
+# 4. Commit + push
+git diff
+git commit -am "Bump Hermes to vYYYY.M.D"
+git push
+
+# 5. On the running VM
+ssh ... root@<vm-ip>
+cd /opt/hermes-anywhere
+git pull
+docker compose pull && docker compose up -d
+make doctor
+```
+
+**Never use `:latest`.** Pinning is mandatory.
+
+The repo also has three layers of upstream-watching, each independent:
+
+1. `make check-update` — on-demand
+2. `sudo make install-cron` on the VM — daily systemd timer with Telegram + journald
+3. `ci/check-upstream.yml` — daily GitHub Action that opens an issue with release notes (move to `.github/workflows/` to activate; see `ci/README.md`)
+
+When opening an issue or PR for an update, link the upstream release notes. Read them for breaking changes — past Hermes releases have removed slash commands, deprecated config formats, and changed redaction defaults.
 
 ---
 

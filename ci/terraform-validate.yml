@@ -1,0 +1,37 @@
+name: Terraform validate
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform-validate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'terraform/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [hetzner, digitalocean, aws-lightsail, oracle, gcp]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.9.0'
+
+      - name: terraform fmt
+        working-directory: terraform/${{ matrix.provider }}
+        run: terraform fmt -check -diff
+
+      - name: terraform init (no backend)
+        working-directory: terraform/${{ matrix.provider }}
+        run: terraform init -backend=false
+
+      - name: terraform validate
+        working-directory: terraform/${{ matrix.provider }}
+        run: terraform validate
