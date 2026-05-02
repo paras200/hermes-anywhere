@@ -1,0 +1,14 @@
+tenancy_ocid        = "ocid1.tenancy.oc1..."
+user_ocid           = "ocid1.user.oc1..."
+fingerprint         = "aa:bb:cc:dd:..."
+private_key_path    = "~/.oci/oci_api_key.pem"
+region              = "us-ashburn-1"
+compartment_ocid    = "ocid1.tenancy.oc1..."           # tenancy OCID = root compartment
+availability_domain = "AbCD:US-ASHBURN-AD-1"
+
+ssh_public_key      = "ssh-ed25519 AAAA... your-key"
+openrouter_api_key  = "sk-or-v1-..."
+
+# Free tier ceiling: ocpus + memory_in_gbs across all A1 instances.
+# ocpus         = 2     # of 4 free
+# memory_in_gbs = 12    # of 24 free

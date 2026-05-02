@@ -1,0 +1,6 @@
+do_token           = "dop_v1_..."
+ssh_public_key     = "ssh-ed25519 AAAA... your-key"
+openrouter_api_key = "sk-or-v1-..."
+
+# droplet_size = "s-2vcpu-4gb"   # $24/mo
+# region       = "nyc3"

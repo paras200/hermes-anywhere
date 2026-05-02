@@ -1,0 +1,46 @@
+# Secrets — NEVER commit
+.env
+.env.*
+!.env.example
+*.gpg
+*.key
+*.pem
+client_secret*.json
+**/credentials.json
+
+# Hermes runtime state
+hermes-data/
+hermes-data.tgz
+hermes-data.*.tgz
+
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/terraform.tfvars
+!**/terraform.tfvars.example
+**/*.auto.tfvars
+**/crash.log
+**/crash.*.log
+
+# Cloud SDK auth
+.aws/
+.config/gcloud/
+.oci/
+
+# Local backups + scratch
+*.bak
+backups/
+NOTES.md
+scratch/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Claude Code local state
+.claude/

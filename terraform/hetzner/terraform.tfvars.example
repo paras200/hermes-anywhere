@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars and fill in. NEVER commit terraform.tfvars.
+
+hcloud_token       = "REPLACE_WITH_HETZNER_API_TOKEN"
+ssh_public_key     = "ssh-ed25519 AAAA... your-key"
+openrouter_api_key = "sk-or-v1-..."
+
+# Optional
+# server_type            = "cx22"          # 2 vCPU, 4GB, €4.49/mo (floor)
+# server_type            = "cpx11"         # 2 vCPU AMD, 2GB, €5.49/mo
+# location               = "fsn1"          # Falkenstein DE
+# telegram_bot_token     = "1234:ABC..."
+# telegram_allowed_users = "111111111,222222222"

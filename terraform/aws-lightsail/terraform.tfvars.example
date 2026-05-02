@@ -1,0 +1,6 @@
+ssh_public_key     = "ssh-ed25519 AAAA... your-key"
+openrouter_api_key = "sk-or-v1-..."
+
+# region            = "us-east-1"
+# availability_zone = "us-east-1a"
+# bundle_id         = "medium_3_0"   # $20/mo

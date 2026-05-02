@@ -1,0 +1,7 @@
+project_id         = "your-gcp-project-id"
+region             = "us-central1"
+zone               = "us-central1-a"
+ssh_public_key     = "ssh-ed25519 AAAA... your-key"
+openrouter_api_key = "sk-or-v1-..."
+
+# machine_type = "e2-small"   # ~$13/mo. Use e2-medium for headroom.
