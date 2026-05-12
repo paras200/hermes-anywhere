@@ -46,6 +46,12 @@ variable "hermes_model" {
   default     = "openai/gpt-oss-120b:free"
 }
 
+variable "hermes_fallback_model" {
+  description = "OpenRouter slug used as backup when the primary fails (rate limit, 5xx, conn errors). Empty string disables the fallback chain. Pick another `:free` slug to keep deploys at $0."
+  type        = string
+  default     = "z-ai/glm-4.5-air:free"
+}
+
 variable "openrouter_api_key" {
   type      = string
   sensitive = true

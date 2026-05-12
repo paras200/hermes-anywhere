@@ -73,4 +73,8 @@ runcmd:
   - systemctl daemon-reload
   - systemctl enable --now hermes.service
 
+  # Append the fallback model to hermes-data/config.yaml once the container
+  # has populated it. No-ops when hermes_fallback_model is empty.
+  - /opt/hermes-anywhere/scripts/configure-fallback.sh "${hermes_fallback_model}"
+
 final_message: "Hermes Anywhere bootstrap complete. Dashboard at http://<public-ip>:9119 in ~60s."
