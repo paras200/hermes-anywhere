@@ -41,7 +41,7 @@ Full breakdown in [`docs/COSTS.md`](docs/COSTS.md). Recommended path: try Oracle
 - An [OpenRouter API key](https://openrouter.ai/keys) (free model slugs work without credits, but a one-time **$10 top-up** raises free-model rate limits from 50/day → 1,000/day — strongly recommended for an always-on agent)
 - Cloud-specific credentials (see the per-provider README in `terraform/<provider>/`)
 
-**Deploy:**
+**Deploy to a cloud VM:**
 
 ```bash
 git clone https://github.com/paras200/hermes-anywhere.git
@@ -54,7 +54,18 @@ terraform init
 terraform apply
 ```
 
-In ~60–90 seconds, `terraform output dashboard_url` is reachable in your browser.
+In ~60–90 seconds, `terraform output dashboard_url` is reachable in your browser. The VM pulls `nousresearch/hermes-agent:latest` on first boot, so you always get the current image.
+
+**Run locally (Docker Compose only):**
+
+```bash
+git clone https://github.com/paras200/hermes-anywhere.git
+cd hermes-anywhere
+make install   # creates .env, pulls latest image, starts containers
+# edit .env to add OPENROUTER_API_KEY, then: docker compose restart
+```
+
+Dashboard at <http://localhost:9119>. `make update` later to pull a newer image.
 
 ## Day-2 operations
 
@@ -62,9 +73,11 @@ Once Hermes is up, the repo is also a full operations toolkit:
 
 | Command | What it does |
 |---|---|
+| `make install` | First-time setup — copy `.env`, pull latest image, start containers |
+| `make update` | Pull the newest image digest and restart (no file edits) |
 | `make doctor` | Health check — containers, dashboard, OpenRouter key, disk |
-| `make check-update` | Polls Docker Hub for newer Hermes versions |
-| `make update VERSION=v2026.5.X` | Atomic version bump across docker-compose + 5× Terraform modules |
+| `make check-update` | Compares local vs Docker Hub digest for the configured tag |
+| `make pin TAG=…` | Pin all files to a specific tag (`latest`, `vYYYY.M.D`, or `sha-…`) |
 | `make backup` | GPG-encrypted tarball of `hermes-data/` |
 | `make restore FILE=…` | Restore from a backup tarball |
 | `sudo make install-cron` | Install systemd timer for daily upstream-version checks (Telegram + journal) |

@@ -67,7 +67,7 @@ variable "dashboard_allowed_cidrs" {
 
 variable "hermes_version" {
   type    = string
-  default = "v2026.4.30"
+  default = "latest"
 }
 
 variable "openrouter_api_key" {

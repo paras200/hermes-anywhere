@@ -40,6 +40,7 @@ write_files:
       Type=oneshot
       RemainAfterExit=yes
       WorkingDirectory=/opt/hermes-anywhere
+      ExecStartPre=/usr/bin/docker compose pull
       ExecStart=/usr/bin/docker compose up -d
       ExecStop=/usr/bin/docker compose down
 

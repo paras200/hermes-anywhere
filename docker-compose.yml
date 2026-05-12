@@ -3,14 +3,17 @@
 # - gateway: messaging + cron + curator (`hermes gateway run`)
 # - dashboard: web UI on port 9119
 #
-# Both services share the hermes-data/ bind mount. Pin a specific image tag —
-# never use :latest. Browse tags: https://hub.docker.com/r/nousresearch/hermes-agent/tags
+# Default tag is `latest` so a fresh clone always installs the current image.
+# `make install` / `make update` run `docker compose pull` first so this resolves
+# to the newest digest at deploy time. To pin a specific digest or sha-* tag for
+# reproducibility, set HERMES_VERSION in .env. Browse tags:
+# https://hub.docker.com/r/nousresearch/hermes-agent/tags
 
 name: hermes
 
 services:
   gateway:
-    image: nousresearch/hermes-agent:${HERMES_VERSION:-v2026.4.30}
+    image: nousresearch/hermes-agent:${HERMES_VERSION:-latest}
     container_name: hermes-gateway
     restart: unless-stopped
     volumes:
@@ -20,7 +23,7 @@ services:
     command: ["gateway", "run"]
 
   dashboard:
-    image: nousresearch/hermes-agent:${HERMES_VERSION:-v2026.4.30}
+    image: nousresearch/hermes-agent:${HERMES_VERSION:-latest}
     container_name: hermes-dashboard
     restart: unless-stopped
     volumes:

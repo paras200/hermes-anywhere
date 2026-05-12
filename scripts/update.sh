@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-# Bump the Hermes Agent version everywhere it appears.
+# Bump the Hermes Agent tag everywhere it appears.
 #
 # Usage:
-#   scripts/update.sh vYYYY.M.D
+#   scripts/update.sh <tag>
+#
+# <tag> may be:
+#   - `latest`                     (default — pulled fresh on each install)
+#   - `vYYYY.M.D`                  (legacy date-version tag)
+#   - `sha-<commit>`               (specific build for reproducibility)
 #
 # Updates: docker-compose.yml, .env.example, terraform/<provider>/variables.tf
 # Use --dry-run to preview changes without writing.
@@ -17,23 +22,23 @@ for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=1 ;;
     -h|--help)
-      sed -n '2,9p' "$0" | sed 's/^# //; s/^#//'
+      sed -n '2,13p' "$0" | sed 's/^# //; s/^#//'
       exit 0
       ;;
-    v*) NEW="$arg" ;;
-    *) echo "Unknown arg: $arg" >&2; exit 1 ;;
+    -*) echo "Unknown flag: $arg" >&2; exit 1 ;;
+    *) NEW="$arg" ;;
   esac
 done
 
-[[ -n "$NEW" ]] || { echo "Usage: $0 vYYYY.M.D [--dry-run]" >&2; exit 1; }
+[[ -n "$NEW" ]] || { echo "Usage: $0 <tag> [--dry-run]   (e.g. latest, v2026.4.30, sha-abc1234)" >&2; exit 1; }
 
-[[ "$NEW" =~ ^v[0-9]{4}\.[0-9]+\.[0-9]+$ ]] \
-  || { echo "Version must look like 'v2026.4.30'. Got: $NEW" >&2; exit 1; }
+[[ "$NEW" =~ ^(latest|v[0-9]{4}\.[0-9]+\.[0-9]+|sha-[0-9a-f]{7,40})$ ]] \
+  || { echo "Tag must be 'latest', 'vYYYY.M.D', or 'sha-<commit>'. Got: $NEW" >&2; exit 1; }
 
 cd "$REPO_ROOT"
 
-OLD=$(grep -oE 'v[0-9]{4}\.[0-9]+\.[0-9]+' docker-compose.yml | head -1)
-[[ -n "$OLD" ]] || { echo "Could not detect current version in docker-compose.yml" >&2; exit 1; }
+OLD=$(grep -oE 'HERMES_VERSION:-[A-Za-z0-9.-]+' docker-compose.yml | head -1 | cut -d- -f2-)
+[[ -n "$OLD" ]] || { echo "Could not detect current tag in docker-compose.yml" >&2; exit 1; }
 
 if [[ "$OLD" == "$NEW" ]]; then
   echo "Already on $NEW. Nothing to do."
@@ -69,4 +74,5 @@ echo ""
 echo "Done. Next steps:"
 echo "  1. Review changes:  git diff"
 echo "  2. Commit:          git commit -am \"Bump Hermes to $NEW\""
-echo "  3. On the VM:       cd /opt/hermes-anywhere && git pull && docker compose pull && docker compose up -d"
+echo "  3. Locally:         make install"
+echo "  4. On the VM:       cd /opt/hermes-anywhere && git pull && sudo systemctl restart hermes"

@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# Check Docker Hub for newer Hermes Agent images than the pinned version.
+# Check Docker Hub for a newer Hermes Agent image than what is currently
+# pulled locally. Upstream switched from `vYYYY.M.D` tags to a `latest` +
+# `sha-<commit>` scheme, so we compare image digests rather than version
+# strings.
 #
 # Exit codes:
-#   0  — pinned version is current
-#   1  — newer version available (prints summary + release notes link)
-#   2  — error (Docker Hub unreachable, no pinned version found, etc.)
+#   0  — local image matches the latest published digest
+#   1  — a newer image is available (prints summary + commands)
+#   2  — error (Docker Hub unreachable, no digest found, etc.)
 #
 # Usage: scripts/check-update.sh [--quiet]
 
@@ -13,6 +16,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="$REPO_ROOT/docker-compose.yml"
 QUIET=0
+IMAGE="nousresearch/hermes-agent"
 
 [[ "${1:-}" == "--quiet" ]] && QUIET=1
 
@@ -24,32 +28,44 @@ command -v curl >/dev/null || die "curl is required"
 
 [[ -f "$COMPOSE_FILE" ]] || die "docker-compose.yml not found at $COMPOSE_FILE"
 
-CURRENT=$(grep -oE 'v[0-9]{4}\.[0-9]+\.[0-9]+' "$COMPOSE_FILE" | head -1)
-[[ -n "$CURRENT" ]] || die "could not parse current version from $COMPOSE_FILE"
+# Read the pinned tag (defaults to `latest` when HERMES_VERSION is unset/empty).
+TAG="${HERMES_VERSION:-}"
+if [[ -z "$TAG" && -f "$REPO_ROOT/.env" ]]; then
+  TAG=$(grep -E '^HERMES_VERSION=' "$REPO_ROOT/.env" | tail -1 | cut -d= -f2- || true)
+fi
+[[ -n "$TAG" ]] || TAG="latest"
+log "Configured tag: $TAG"
 
-log "Current pinned version: $CURRENT"
+# Latest digest on Docker Hub for that tag (multi-arch index digest).
+REMOTE_DIGEST=$(curl -fsSL \
+  "https://hub.docker.com/v2/repositories/$IMAGE/tags/$TAG" \
+  | jq -r '.digest // empty') || die "could not query Docker Hub for tag '$TAG'"
+[[ -n "$REMOTE_DIGEST" ]] || die "no digest found for tag '$TAG' on Docker Hub"
+log "Latest published digest: $REMOTE_DIGEST"
 
-# Docker Hub: list tags by last_updated descending; ignore non-version tags (latest, sha-*, etc.)
-LATEST=$(curl -fsSL \
-  "https://hub.docker.com/v2/repositories/nousresearch/hermes-agent/tags?page_size=25&ordering=last_updated" \
-  | jq -r '.results[].name' \
-  | grep -E '^v[0-9]{4}\.[0-9]+\.[0-9]+$' \
-  | sort -V \
-  | tail -1) || die "could not query Docker Hub"
+# Locally pulled digest (if image is present). Prefer RepoDigests.
+LOCAL_DIGEST=$(docker image inspect "$IMAGE:$TAG" \
+  --format '{{range .RepoDigests}}{{.}}{{"\n"}}{{end}}' 2>/dev/null \
+  | head -1 | awk -F'@' '{print $2}' || true)
 
-[[ -n "$LATEST" ]] || die "no version-shaped tags found in Docker Hub response"
+if [[ -z "$LOCAL_DIGEST" ]]; then
+  log ""
+  log "✗ No local image for $IMAGE:$TAG yet."
+  log "  Pull with:  docker compose pull && docker compose up -d"
+  exit 1
+fi
+log "Local image digest:      $LOCAL_DIGEST"
 
-log "Latest published version: $LATEST"
-
-if [[ "$CURRENT" == "$LATEST" ]]; then
+if [[ "$LOCAL_DIGEST" == "$REMOTE_DIGEST" ]]; then
   log "✓ Up to date."
   exit 0
 fi
 
-# Newer version exists — print the GitHub release notes URL.
 log ""
-log "✗ Update available: $CURRENT → $LATEST"
+log "✗ Update available for $IMAGE:$TAG"
+log "  local : $LOCAL_DIGEST"
+log "  remote: $REMOTE_DIGEST"
 log ""
-log "  Release notes: https://github.com/NousResearch/hermes-agent/releases/tag/$LATEST"
-log "  Apply with:    scripts/update.sh $LATEST"
+log "  Apply with:  docker compose pull && docker compose up -d"
+log "  Or:          make install"
 exit 1

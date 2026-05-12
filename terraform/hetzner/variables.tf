@@ -42,7 +42,7 @@ variable "dashboard_allowed_cidrs" {
 variable "hermes_version" {
   description = "Hermes Docker image tag. Browse: https://hub.docker.com/r/nousresearch/hermes-agent/tags"
   type        = string
-  default     = "v2026.4.30"
+  default     = "latest"
 }
 
 variable "openrouter_api_key" {
