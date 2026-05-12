@@ -1,7 +1,7 @@
 #cloud-config
 # Hermes Anywhere — cloud-init bootstrap (provider-agnostic).
 #
-# Rendered by Terraform at deploy time. Placeholders ${VAR} are filled by
+# Rendered by Terraform at deploy time. Placeholders $${VAR} are filled by
 # the per-cloud module via templatefile() / cloudinit_config.
 #
 # Tested on: Debian 12, Ubuntu 22.04/24.04, Oracle Linux 8 (ARM A1).
@@ -17,7 +17,10 @@ packages:
   - ufw
 
 write_files:
-  - path: /opt/hermes-anywhere/.env
+  # Staged at /etc/ — moved into /opt/hermes-anywhere/ by runcmd AFTER the git
+  # clone. Writing it under /opt directly would make the dir non-empty and
+  # silently break `git clone` (which requires an empty target).
+  - path: /etc/hermes-anywhere.env
     permissions: "0600"
     owner: root:root
     content: |
@@ -54,6 +57,8 @@ runcmd:
 
   # Clone the Hermes Anywhere repo (public). Pin to a tag in production.
   - git clone --depth 1 https://github.com/${repo_owner}/${repo_name}.git /opt/hermes-anywhere
+  - mv /etc/hermes-anywhere.env /opt/hermes-anywhere/.env
+  - chmod 600 /opt/hermes-anywhere/.env
   - mkdir -p /opt/hermes-anywhere/hermes-data
   - chmod 700 /opt/hermes-anywhere/hermes-data
 

@@ -52,7 +52,9 @@ resource "google_compute_instance" "hermes" {
 
   boot_disk {
     initialize_params {
-      image = "debian-cloud/debian-12"
+      # Ubuntu LTS — GCP's debian-12 image ships without cloud-init, so the
+      # cloud-config user-data would silently no-op there.
+      image = "ubuntu-os-cloud/ubuntu-2404-lts-amd64"
       size  = var.boot_disk_gb
     }
   }
