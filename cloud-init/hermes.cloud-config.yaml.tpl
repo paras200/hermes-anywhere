@@ -26,6 +26,8 @@ write_files:
     content: |
       HERMES_VERSION=${hermes_version}
       DASHBOARD_BIND=0.0.0.0
+      HERMES_MODEL=${hermes_model}
+      HERMES_INFERENCE_PROVIDER=openrouter
       OPENROUTER_API_KEY=${openrouter_api_key}
       TELEGRAM_BOT_TOKEN=${telegram_bot_token}
       TELEGRAM_ALLOWED_USERS=${telegram_allowed_users}

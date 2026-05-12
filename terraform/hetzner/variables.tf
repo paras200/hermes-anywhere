@@ -45,6 +45,12 @@ variable "hermes_version" {
   default     = "latest"
 }
 
+variable "hermes_model" {
+  description = "OpenRouter model slug. Default is a free model so deploys cost $0; override to any OpenRouter slug. Browse: https://openrouter.ai/models"
+  type        = string
+  default     = "openai/gpt-oss-120b:free"
+}
+
 variable "openrouter_api_key" {
   description = "OpenRouter API key (https://openrouter.ai/keys)."
   type        = string

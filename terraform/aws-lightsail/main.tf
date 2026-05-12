@@ -26,6 +26,7 @@ resource "aws_lightsail_instance" "hermes" {
 
   user_data = templatefile("${path.module}/../../cloud-init/hermes.cloud-config.yaml.tpl", {
     hermes_version         = var.hermes_version
+    hermes_model           = var.hermes_model
     openrouter_api_key     = var.openrouter_api_key
     telegram_bot_token     = var.telegram_bot_token
     telegram_allowed_users = var.telegram_allowed_users
